@@ -21,32 +21,18 @@ from keyboard_mouse_CTRL import (
 
 load_dotenv()
 
-
 REACT_PROMPT = PromptTemplate.from_template(
     """You are Friday, a desktop AI assistant.
 
-Use the available tools when they are required to complete the user's request.
-Do not invent tool results.
+Use the available tools when required. Do not invent tool results.
 Be concise and practical.
 
-You have access to these tools:
+Tools:
 {tools}
-
-Use this format:
-
-Question: the user's request
-Thought: reason about the next step
-Action: one of [{tool_names}]
-Action Input: the input for the action
-Observation: the tool result
-... (repeat Thought/Action/Action Input/Observation as needed)
-Thought: I now know the final answer
-Final Answer: the answer to the user
 
 Question: {input}
 Thought: {agent_scratchpad}"""
 )
-
 
 TOOLS = [
     google_search,
@@ -70,16 +56,14 @@ TOOLS = [
 @function_tool(
     name="thinking_capability",
     description=(
-        "Use this tool for tasks that require reasoning or an action beyond "
-        "normal conversation, including web search, weather, desktop apps, "
-        "files, keyboard, mouse, and volume control."
+        "Use this tool for tasks requiring reasoning or actions such as "
+        "search, weather, desktop apps, files, keyboard, mouse, or volume."
     ),
 )
 async def thinking_capability(query: str) -> str:
-    """Run the tool-using reasoning agent for a user request."""
     try:
         model = ChatGoogleGenerativeAI(
-            model="gemini-3.8-flash",
+            model="gemini-3-flash-preview",
             temperature=0,
         )
 
