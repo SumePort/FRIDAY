@@ -1,74 +1,58 @@
 import asyncio
-import hashlib
-import json
-import time
 import logging
-from memory_store import ConversationMemory
-from pydantic import BaseModel
+import os
+from datetime import datetime, timezone
+from typing import Any
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s"
-)
+from memory_store import ConversationMemory
+
+logger = logging.getLogger(__name__)
+
 
 class MemoryExtractor:
-    def __init__(self):
-        # last_conversation_hash is no longer needed with the new logic
-        self.saved_message_count = 0  # Tracks how many messages have been saved.
+    """Persist newly added LiveKit conversation items."""
 
-    def _serialize_for_hash(self, obj):
-        """
-        Recursively converts Pydantic objects or nested data into serializable dicts.
-        This is necessary for consistency.
-        """
-        if isinstance(obj, BaseModel):
-            return obj.model_dump()
-        elif isinstance(obj, dict):
-            return {k: self._serialize_for_hash(v) for k, v in obj.items()}
-        elif isinstance(obj, list):
-            return [self._serialize_for_hash(item) for item in obj]
-        else:
-            return obj  # primitive types
+    def __init__(self, user_id: str | None = None, poll_interval: float = 1.0):
+        self.user_id = user_id or os.getenv("FRIDAY_USER_ID", "default_user")
+        self.poll_interval = poll_interval
+        self.saved_message_count = 0
 
-    async def run(self, session):
-        """
-        The main loop that checks for and saves new conversations.
-        """
-        memory = ConversationMemory("Gaurav_22")
+    @staticmethod
+    def _serialize(message: Any) -> dict:
+        if hasattr(message, "model_dump"):
+            return message.model_dump(mode="json")
+        if hasattr(message, "dict"):
+            return message.dict()
+        if isinstance(message, dict):
+            return message
+        return {"content": str(message)}
+
+    async def run(self, history: Any) -> None:
+        memory = ConversationMemory(self.user_id)
 
         while True:
-            # Check for new messages every 1 second
-            await asyncio.sleep(1)
+            await asyncio.sleep(self.poll_interval)
 
-            # Assuming the conversation history is a list of message objects
-            # within the session object. Adjust 'session.chat_history' if needed.
-            current_chat_history = session
-            
-            # This is the core logic: Compare the current count with the saved count.
-            if len(current_chat_history) > self.saved_message_count:
-                logging.info(f"{len(current_chat_history) - self.saved_message_count} new message(s) detected. Saving...")
-                
-                # Get a "slice" of the new messages that haven't been saved yet.
-                new_messages = current_chat_history[self.saved_message_count:]
-                
-                for message in new_messages:
-                    # Serialize the single message for saving
-                    serialized_message = self._serialize_for_hash(message)
-                    conversation_wrapper = {
-                        "messages": [serialized_message],
-                        "timestamp": time.time()
-                    }
-                    
-                    success = memory.save_conversation(conversation_wrapper)
-                    
-                    if success:
-                        logging.info(f"Saved new message with ID: {message.id}")
-                    else:
-                        logging.error(f"Failed to save message with ID: {message.id}")
-                
-                # After successfully saving all new messages, update the counter.
-                self.saved_message_count = len(current_chat_history)
-            
-            else:
-                pass
+            try:
+                messages = list(history.items)
+            except Exception:
+                logger.exception("Could not read LiveKit conversation history")
+                continue
+
+            if len(messages) <= self.saved_message_count:
+                continue
+
+            new_messages = messages[self.saved_message_count:]
+
+            for message in new_messages:
+                serialized = self._serialize(message)
+                conversation = {
+                    "messages": [serialized],
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                }
+                if memory.save_conversation(conversation):
+                    logger.info("Saved conversation item")
+                else:
+                    logger.error("Failed to save conversation item")
+
+            self.saved_message_count = len(messages)
