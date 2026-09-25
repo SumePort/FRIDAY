@@ -1,66 +1,59 @@
-# 🤖 SachdevaAI Jarvis — Voice-Based AI Assistant
+# FRIDAY — Voice Desktop AI Assistant
 
-An advanced **voice-based AI assistant** built using **Python**, **LangChain**, and **LiveKit**, designed and developed by **Gaurav Sachdeva**.  
-Jarvis interacts with users in **natural Hinglish (Hindi + English)** — just like how modern Indians talk every day — with reasoning capabilities powered by **LangChain Agent Mode**.
+FRIDAY is a Python voice assistant prototype built around LiveKit Agents, Gemini, LangChain, and Windows desktop automation.
 
----
+## Current capabilities
 
-## 🚀 Overview
+- Real-time voice conversation through LiveKit + Gemini Live
+- Hinglish assistant personality
+- Google Custom Search
+- Current date/time
+- Current weather
+- Desktop app launching/closing
+- File and folder operations
+- Keyboard and mouse automation
+- Basic JSON conversation memory
 
-**SachdevaAI Jarvis** is not just another chatbot — it’s a thinking assistant.  
-It can:
-- Understand Hinglish (mix of Hindi and English)
-- Speak fluently with personality and humor
-- Fetch real-time information (Date, City, Weather)
-- Use reasoning and tools via **LangChain Agents**
-- Respond naturally through voice using **LiveKit**
+## Requirements
 
-This project demonstrates how to connect real-world tools with LLMs to build a contextual, voice-enabled, reasoning assistant.
+- Python 3.10–3.14
+- A LiveKit project
+- A Google Gemini API key
+- Optional Google Custom Search credentials
+- Optional OpenWeather API key
+- Windows for the desktop-control features
 
----
+## Setup
 
-## 🧠 Tech Stack
+Create a virtual environment:
 
-| Component | Description |
-|------------|-------------|
-| **Python** | Core programming language used to develop Jarvis |
-| **LangChain** | Enables LLM reasoning and tool integration |
-| **LiveKit** | Powers real-time voice-based communication |
-| **AsyncIO** | Handles asynchronous tasks like API calls |
-| **Requests** | Used for fetching user’s city via IP |
-| **Custom APIs** | For weather and time fetching |
+    python -m venv .venv
+    .venv\Scripts\activate
 
----
+Install dependencies:
 
-## ⚙️ Features
+    python -m pip install --upgrade pip
+    pip install -r requirements.txt
 
-- 🗣️ **Voice Interaction:** Powered by LiveKit for real-time voice communication  
-- 💬 **Hinglish Conversation:** Natural Indian-style responses  
-- 🌦️ **Dynamic Context:** Auto-fetches current date, city, and weather  
-- 🧩 **Reasoning Mode:** Uses LangChain Agent Mode for tool-based decision-making  
-- 🧠 **Personality:** Witty, respectful, and polished assistant tone  
-- ⚡ **Asynchronous Execution:** Smooth performance using async functions  
+Create a local .env file from .env.example and fill in your credentials.
 
----
+Run the assistant:
 
-## How to get this code:
-- git clone https://github.com/Gauravsachdeva23e/SachdevaAI_Jarvis_Code.git,
-- cd SachdevaAI_Jarvis_Code
+    python agent.py console
 
+## Environment variables
 
-<h2> How to run Jarvis </h2>
+- LIVEKIT_URL
+- LIVEKIT_API_KEY
+- LIVEKIT_API_SECRET
+- GOOGLE_API_KEY
+- GOOGLE_SEARCH_API_KEY (optional)
+- SEARCH_ENGINE_ID (optional)
+- OPENWEATHER_API_KEY (optional)
+- FRIDAY_USER_ID (optional)
 
-## Create a Virtual Environment
-- python -m venv venv,
-- venv\Scripts\activate
+## Security
 
+Never commit .env, API keys, conversation memory, or desktop-control logs.
 
-
-## Install Dependencies
-pip install -r requirements.txt
-
-## Run Jarvis
-python agent.py console
-
-<h2>Watch video once (Recommended) </h2>
-SachdevaAI - https://www.youtube.com/@sachdevaAI
+The desktop-control tools can click, type, open, close, rename, and delete files. Add explicit permission/confirmation controls before giving FRIDAY unattended autonomy.
