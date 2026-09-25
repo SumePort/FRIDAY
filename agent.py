@@ -17,7 +17,7 @@ class Assistant(Agent):
         super().__init__(
             instructions=instructions_prompt,
             llm=google.realtime.RealtimeModel(
-                model="gemini-3.8-live",
+                model="gemini-3.1-flash-live-preview",
                 voice="Puck",
             ),
             tools=[thinking_capability],
@@ -46,6 +46,7 @@ async def entrypoint(ctx: agents.JobContext):
     try:
         await memory_task
     except asyncio.CancelledError:
+        memory_task.cancel()
         raise
 
 
