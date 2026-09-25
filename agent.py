@@ -1,48 +1,55 @@
+import asyncio
+
 from dotenv import load_dotenv
 from livekit import agents
-from livekit.agents import AgentSession, Agent, RoomInputOptions, ChatContext, ChatMessage
+from livekit.agents import Agent, AgentSession, RoomInputOptions
 from livekit.plugins import google, noise_cancellation
 
-# Import your custom modules
-from Jarvis_prompts import instructions_prompt, Reply_prompts
+from Friday_prompts import instructions_prompt, reply_prompts
+from Friday_reasoning import thinking_capability
 from memory_loop import MemoryExtractor
-from jarvis_reasoning import thinking_capability
+
 load_dotenv()
 
 
 class Assistant(Agent):
-    def __init__(self, chat_ctx) -> None:
-        super().__init__(chat_ctx = chat_ctx,
-                        instructions=instructions_prompt,
-                        llm=google.beta.realtime.RealtimeModel(voice="Charon"),
-                        tools=[thinking_capability]
-                                )
+    def __init__(self) -> None:
+        super().__init__(
+            instructions=instructions_prompt,
+            llm=google.realtime.RealtimeModel(
+                model="gemini-3.8-live",
+                voice="Puck",
+            ),
+            tools=[thinking_capability],
+        )
+
 
 async def entrypoint(ctx: agents.JobContext):
-    session = AgentSession(
-        preemptive_generation=True
-    )
-    
-    #getting the current memory chat
-    current_ctx = session.history.items
-    
+    await ctx.connect()
+
+    session = AgentSession(preemptive_generation=True)
 
     await session.start(
         room=ctx.room,
-        agent=Assistant(chat_ctx=current_ctx), #sending currenet chat to llm in realtime
+        agent=Assistant(),
         room_input_options=RoomInputOptions(
-            noise_cancellation=noise_cancellation.BVC()
+            noise_cancellation=noise_cancellation.BVC(),
         ),
     )
-    await session.generate_reply(
-        instructions=Reply_prompts
+
+    await session.generate_reply(instructions=reply_prompts)
+
+    memory_task = asyncio.create_task(
+        MemoryExtractor().run(session.history)
     )
-    conv_ctx = MemoryExtractor()
-    await conv_ctx.run(current_ctx)
-    
+
+    try:
+        await memory_task
+    except asyncio.CancelledError:
+        raise
 
 
 if __name__ == "__main__":
-    agents.cli.run_app(agents.WorkerOptions(entrypoint_fnc=entrypoint))
-
-    
+    agents.cli.run_app(
+        agents.WorkerOptions(entrypoint_fnc=entrypoint)
+    )
