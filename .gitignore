@@ -10,6 +10,10 @@ env/
 .env.*
 !.env.example
 
+# Local assistant data
+conversations/
+control_log.txt
+
 # IDE
 .vscode/
 .idea/
@@ -18,10 +22,13 @@ env/
 .DS_Store
 Thumbs.db
 
-# Logs
+# Logs / caches
 *.log
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
 
-# Local databases
+# Databases
 *.db
 *.sqlite
 *.sqlite3
